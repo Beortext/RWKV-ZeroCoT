@@ -16,8 +16,8 @@
 ## 使用方法
 ### （一）搭建环境：
 ``` bash
-python -m venv zore_cot_test
-source zore_cot_test/bin/activate
+python -m venv zero_cot_test
+source zero_cot_test/bin/activate
 ```
 之后安装 [`PyTorch`](https://pytorch.org/get-started/) 即可
 
@@ -31,11 +31,12 @@ Tokens 2 yyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
 Tokens 3 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 
 ...
+
 ```
 
 ### (三) 运行：
 ``` python
-python ZoreCoT.py
+python ZeroCoT.py
 ```
 
 ## 项目进展 | Project Progress  

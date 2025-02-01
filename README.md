@@ -33,6 +33,11 @@ Tokens 3 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
 ...
 ```
 
+### (三) 运行：
+``` python
+python ZoreCoT.py
+```
+
 ## 项目进展 | Project Progress  
 
 - [ ] **实现步骤一 | Implementation Step One**  

@@ -1,12 +1,14 @@
 import random as rd, torch
 
-def generate_tokens_all_insertions(tokens: str, window_len: int = 64, stride_len: int = 42, delta_ratio=0.1):
+def generate_tokens_all_insertions(tokens: str, window_len: int = 90, stride_len: int = 42, delta_ratio=0.1, cot_token=[[61, 7277, 63], [754, 7277, 63]]):
     """
     :param tokens_list: 输入的token序列列表（实际上传入的是一个字符串，本函数内部将其转换为token子序列列表）
     :param window_len: 每个子序列的长度，默认为64
     :param stride_len: 窗口移动的步长，默认为42
     :param delta_ratio: 中间位置随机范围的比例（默认中间±10%长度）
     :return: 生成器，每次产出一个元组：(原序列, 对应的插入序列列表, 插入位置)
+
+    The prefix "cot-" and the suffix.
     """
     # 根据窗口长度和步长将整个token序列划分为多个子序列
     tokens_list = [tokens[i:i + window_len] for i in range(0, len(tokens) - window_len + 1, stride_len)]
@@ -32,7 +34,7 @@ def generate_tokens_all_insertions(tokens: str, window_len: int = 64, stride_len
         # 遍历子序列中的每个token，为每个token生成一个新的序列，其中token被插入到ki_pos位置
         for token in tokens:
             # 构造新的序列：在ki_pos位置之前的部分 + 当前token + ki_pos位置之后的部分
-            new_tokens = tokens[:ki_pos] + [token] + tokens[ki_pos:]
+            new_tokens = tokens[:ki_pos] + cot_token[0] + [token] + cot_token[1] + tokens[ki_pos:]
             kot_group.append(new_tokens)
 
         # 通过生成器返回当前子序列、对应的所有插入序列以及所选的插入位置
@@ -76,7 +78,7 @@ def calculate_subtoken_perplexity(
         source_log_probs, 
         dim=2, 
         index=target_subtokens
-    ).squeeze()  # 降维到 (target_length,)
+    ).squeeze(dim=1)
 
     # -------------------- 分批处理候选序列 --------------------
     candidate_blocks = []
@@ -88,7 +90,7 @@ def calculate_subtoken_perplexity(
         candidate_logits = model.forward(batch_candidates)  # (batch_size, seq_len, vocab_size)
         
         # 截取关键位置之后的预测结果
-        candidate_logits = candidate_logits[:, key_position:-1, :]  # (batch_size, target_length, vocab_size)
+        candidate_logits = candidate_logits[:, key_position+6:-1, :]  # (batch_size, target_length, vocab_size)
         
         # 计算log概率并提取目标标记对应的值
         candidate_log_probs = torch.log_softmax(candidate_logits, dim=2)
@@ -105,7 +107,7 @@ def calculate_subtoken_perplexity(
 
     # -------------------- 计算困惑度 --------------------
     # 源序列困惑度计算
-    avg_source_log_prob = source_subtoken_logits.mean()  # 平均log概率
+    avg_source_log_prob = source_subtoken_logits.mean(dim=1)  # 平均log概率
     source_perplexity = torch.exp(-avg_source_log_prob)  # 困惑度公式：exp(-avg_log_prob)
 
     # 候选序列困惑度计算（批量处理）
@@ -139,6 +141,7 @@ def calculate_subtoken_perplexity(
     ).replace(decoded_char, f"[{decoded_char}]", 1)  # 高亮第一个差异字符
     
     print("关键位置可视化:\n" + highlighted_sequence)
+
 
 
 
